@@ -152,6 +152,9 @@ properties:
   director.flush_arp:
     description: Clear up arp entries when machines are recreated
     default: false
+  director.network_lifecycle.enabled:
+    description: Enables bosh managed networks
+    default: false
   director.enable_virtual_delete_vms:
     description: When true, bosh will not delete vm from cloud when instance update, just destroy vm record in db
     default: false

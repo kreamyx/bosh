@@ -3,6 +3,7 @@ module Bosh::Director
     class DeploymentSpecParser
       include ValidationHelper
 
+      # Karim: deployment here is a planner object
       def initialize(deployment, event_log, logger)
         @event_log = event_log
         @logger = logger

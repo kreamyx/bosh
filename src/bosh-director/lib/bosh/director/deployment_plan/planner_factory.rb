@@ -82,11 +82,18 @@ module Bosh
           @logger.info('Creating deployment plan')
           @logger.info("Deployment plan options: #{plan_options}")
 
+
+          # deployment here is a planner object
           deployment = Planner.new(attrs, migrated_manifest_object.manifest_hash, migrated_manifest_object.manifest_text, cloud_config_consolidator.cloud_configs, runtime_config_consolidator.runtime_configs, deployment_model, plan_options)
+
+          # create the cloud planner and add it to the planner object "deployment"
           global_network_resolver = GlobalNetworkResolver.new(deployment, Config.director_ips, @logger)
           ip_provider_factory = IpProviderFactory.new(deployment.using_global_networking?, @logger)
           deployment.cloud_planner = CloudManifestParser.new(@logger).parse(cloud_manifest, global_network_resolver, ip_provider_factory)
 
+          # this is where the instance groups and stuff are added to the planner
+          # very important. parse is called.
+          # this literally just parses the manifest and modify the deployment "planner" object
           DeploymentSpecParser.new(deployment, Config.event_log, @logger).parse(migrated_manifest_hash, plan_options)
 
           unless deployment.addons.empty?
@@ -109,6 +116,7 @@ module Bosh
 
           DeploymentValidator.new.validate(deployment)
 
+          # this returns a planner object
           deployment
         end
 
