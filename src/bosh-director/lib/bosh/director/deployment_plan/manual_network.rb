@@ -6,11 +6,12 @@ module Bosh::Director
       extend ValidationHelper
       include IpUtil
 
-      attr_reader :subnets
+      attr_accessor :subnets
+      attr_reader :managed
 
       def self.parse(network_spec, availability_zones, global_network_resolver, logger)
         name = safe_property(network_spec, "name", :class => String)
-
+        managed = safe_property(network_spec, "managed", :default => false)
         reserved_ranges = global_network_resolver.reserved_ranges
         subnet_specs = safe_property(network_spec, 'subnets', :class => Array)
         subnets = []
@@ -24,12 +25,19 @@ module Bosh::Director
           subnets << new_subnet
         end
         validate_all_subnets_use_azs(subnets, name)
-        new(name, subnets, logger)
+        manual_network = new(name, subnets, logger)
+        manual_network.set_managed(managed)
+        manual_network
+      end
+
+      def set_managed(managed)
+        @managed = managed
       end
 
       def initialize(name, subnets, logger)
         super(name, TaggedLogger.new(logger, 'network-configuration'))
         @subnets = subnets
+        @managed = false
       end
 
       ##

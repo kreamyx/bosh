@@ -178,6 +178,9 @@ module Bosh::Director
         @local_dns_include_index = config.fetch('local_dns', {}).fetch('include_index', false)
         @local_dns_use_dns_addresses = config.fetch('local_dns', {}).fetch('use_dns_addresses', false)
 
+        # KE: the network lifecycle feature
+        @network_lifecycle_enabled = config.fetch('network_lifecycle', {}).fetch('enabled', false)
+
         # UUID in config *must* only be used for tests
         @uuid = config['uuid'] || Bosh::Director::Models::DirectorAttribute.find_or_create_uuid(@logger)
         @logger.info("Director UUID: #{@uuid}")
@@ -257,6 +260,11 @@ module Bosh::Director
 
       def local_dns_enabled?
         !!@local_dns_enabled
+      end
+
+      # KE: added this method to check if network lifecycle is enabled
+      def network_lifecycle_enabled?
+        !!@network_lifecycle_enabled
       end
 
       def local_dns_include_index?

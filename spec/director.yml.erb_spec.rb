@@ -50,6 +50,11 @@ describe 'director.yml.erb' do
         'log_level' => 'debug',
         'log_access_events_to_syslog' => false,
         'flush_arp' => false,
+        'network_lifecycle' => {
+          'enabled' => false,
+          'max_orphaned_age_in_days' => 5,
+          'cleanup_schedule' => '0 0,30 * * * * UTC',
+        },
         'local_dns' => {
           'enabled' => true,
           'include_index' => false,

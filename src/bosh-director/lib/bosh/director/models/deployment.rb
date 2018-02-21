@@ -7,6 +7,10 @@ module Bosh::Director::Models
       end
     end
 
+    # many-to-many reltionships has some additional properties
+    many_to_many :networks, 
+      class: "Bosh::Director::Models::Network",
+      join_table: :deployments_networks
     many_to_many :stemcells, order: [Sequel.asc(:name), Sequel.asc(:version)]
     many_to_many :release_versions
     one_to_many  :job_instances, :class => 'Bosh::Director::Models::Instance'

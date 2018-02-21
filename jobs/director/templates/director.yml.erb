@@ -32,6 +32,9 @@ params = {
   'remove_dev_tools' => p('director.remove_dev_tools'),
   'log_access_events_to_syslog' => p('director.log_access_events_to_syslog'),
   'flush_arp' => p('director.flush_arp'),
+  'network_lifecycle' => {
+      'enabled' => p('director.network_lifecycle.enabled'),
+  },
   'local_dns' => {
       'enabled' => p('director.local_dns.enabled'),
       'include_index' => p('director.local_dns.include_index'),
@@ -119,6 +122,12 @@ params['scheduled_jobs'] << {
   'command' => 'ScheduledOrphanedDiskCleanup',
   'schedule' => p('director.disks.cleanup_schedule'),
   'params' => [{'max_orphaned_age_in_days' => p('director.disks.max_orphaned_age_in_days')}]
+}
+
+params['scheduled_jobs'] << {
+  'command' => 'ScheduledOrphanedNetworkCleanup',
+  'schedule' => p('director.network_lifecycle.cleanup_schedule'),
+  'params' => [{'max_orphaned_age_in_days' => p('director.network_lifecycle.max_orphaned_age_in_days')}]
 }
 
 params['scheduled_jobs'] << {

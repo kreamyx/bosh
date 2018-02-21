@@ -47,8 +47,8 @@ result = nil
 error = nil
 
 begin
-  cpi_config = JSON.parse(File.read(ARGV.shift))
   log_buffer = StringIO.new
+  cpi_config = JSON.parse(File.read(ARGV.shift))
   cpi_config['log_buffer'] = log_buffer
 
   request = JSON.parse($stdin.readline)
@@ -57,6 +57,7 @@ begin
   arguments = request['arguments']
   context = request['context']
   requested_api_version = request['api_version']
+
 
   dummy = Bosh::Clouds::Dummy.new(cpi_config, context, requested_api_version)
 

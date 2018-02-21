@@ -152,6 +152,9 @@ properties:
   director.flush_arp:
     description: Clear up arp entries when machines are recreated
     default: false
+  director.network_lifecycle.enabled:
+    description: Enables bosh managed networks
+    default: false
   director.enable_virtual_delete_vms:
     description: When true, bosh will not delete vm from cloud when instance update, just destroy vm record in db
     default: false
@@ -167,7 +170,7 @@ properties:
 
   #Orphaned disk and orphaned snapshot automated cleanup
   director.disks.max_orphaned_age_in_days:
-    description: Days to keep orphaned disks and orhaned snapshots before cleanup
+    description: Days to keep orphaned disks and orphaned snapshots before cleanup
     default: 5
   director.disks.cleanup_schedule:
     description: RufusScheduler cron formatted schedule for cleanup of orphaned disks and orphaned snapshots
@@ -177,6 +180,14 @@ properties:
   director.vms.cleanup_schedule:
     description: RufusScheduler cron formatted schedule for cleanup of orphaned vms
     default: '*/5 * * * * UTC' #every 5min
+  
+  #Orphaned Networks automated cleanup
+  director.network_lifecycle.max_orphaned_age_in_days:
+    description: Days to keep orphaned networks before cleanup
+    default: 5
+  director.network_lifecycle.cleanup_schedule:
+    description: RufusScheduler cron formatted schedule for cleanup of orphaned networks
+    default: '0 0,30 * * * * UTC' #every 30min
 
   # Config Server
   director.config_server.enabled:
