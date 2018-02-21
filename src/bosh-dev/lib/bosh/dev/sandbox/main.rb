@@ -203,6 +203,13 @@ module Bosh::Dev::Sandbox
       attributes = {
         agent_wait_timeout: @agent_wait_timeout,
         blobstore_storage_dir: blobstore_storage_dir,
+
+        verify_multidigest_path: verify_multidigest_path,
+        director_fix_stateful_nodes: @director_fix_stateful_nodes,
+        dns_enabled: @dns_enabled,
+        local_dns: @local_dns,
+        networks: @networks,
+        external_cpi_config: external_cpi_config,
         cloud_storage_dir: cloud_storage_dir,
         config_server_enabled: @config_server_enabled,
         database: @database,
@@ -329,6 +336,7 @@ module Bosh::Dev::Sandbox
       @director_fix_stateful_nodes = options.fetch(:director_fix_stateful_nodes, false)
       @dns_enabled = options.fetch(:dns_enabled, true)
       @local_dns = options.fetch(:local_dns, {enabled: false, include_index: false, use_dns_addresses: false})
+      @networks = options.fetch(:networks, enable_cpi_management: false)
       @nginx_service.reconfigure(options[:ssl_mode])
       @uaa_service.reconfigure(options[:uaa_encryption])
       @users_in_manifest = options.fetch(:users_in_manifest, true)
