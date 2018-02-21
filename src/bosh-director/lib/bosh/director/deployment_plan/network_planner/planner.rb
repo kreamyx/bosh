@@ -11,6 +11,7 @@ module Bosh::Director::DeploymentPlan
         Plan.new(reservation: reservation)
       end
 
+      # Karim: creatig a static network plan reservation of an instance from its static ip address
       def network_plan_with_static_reservation(instance_plan, job_network, static_ip)
         reservation = Bosh::Director::DesiredNetworkReservation.new_static(instance_plan.instance.model, job_network.deployment_network, static_ip)
         @logger.debug("Creating new static reservation #{reservation} for instance '#{instance_plan.instance}'")

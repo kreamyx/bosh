@@ -6,6 +6,8 @@ module Bosh::Director
   # Encapsulates essential director data structures retrieved
   # from the deployment manifest and the running environment.
   module DeploymentPlan
+    # during deployment, a planner encapsulates all the important data from the manifest
+    # the planner object is essentially created from the planner factory
     class Planner
       include LockHelper
       include ValidationHelper
@@ -250,6 +252,7 @@ module Bosh::Director
         @instance_groups_name_index[name]
       end
 
+      # returns an array of all instance groups in the deployment
       def instance_groups_starting_on_deploy
         instance_groups = []
 

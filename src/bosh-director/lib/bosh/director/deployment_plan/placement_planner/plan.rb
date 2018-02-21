@@ -9,8 +9,18 @@ module Bosh
             @logger = logger
           end
 
+          # placement planner is PER instance group
+
+          # job_name is actually the instace group job_name
+          # desired = desired instances
+          # existing = existing_instance_models
+          # networks = non-vip networks defined in the instance group
+          # availability zones are those defined in the instance groups
+
+          # Returns: an array of instance plans
           def create_instance_plans(desired, existing, networks, availability_zones, job_name)
             sorted_existing = existing.sort_by(&:index)
+            # Karim: returns an array of an instance plan per instance 
             instance_plans = assign_zones(desired, sorted_existing, networks, availability_zones, job_name)
 
             instance_plans.reject(&:obsolete?).each do |instance_plan|
@@ -22,6 +32,7 @@ module Bosh
 
           private
 
+          # Karim: assigning the placement of an instance group is either based on static ips or based on persistent disk allocation
           def assign_zones(desired, existing, networks, availability_zones, job_name)
             if has_static_ips?(networks)
               @logger.debug("Job '#{job_name}' has networks with static IPs, placing instances based on static IP distribution")
@@ -33,6 +44,7 @@ module Bosh
           end
 
           def has_static_ips?(networks)
+            # return true if any of the networks supplied has static ips
             !networks.nil? && networks.any? { |network| !! network.static_ips }
           end
         end

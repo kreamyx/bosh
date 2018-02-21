@@ -47,14 +47,15 @@ result = nil
 error = nil
 
 begin
-  cpi_config = JSON.parse(File.read(ARGV.shift))
   log_buffer = StringIO.new
+  cpi_config = JSON.parse(File.read(ARGV.shift))
   cpi_config['log_buffer'] = log_buffer
 
   request = JSON.parse($stdin.readline)
 
   command = request['method']
   arguments = request['arguments']
+  print "args are #{arguments}"
   context = request['context']
 
   dummy = Bosh::Clouds::Dummy.new(cpi_config, context)
