@@ -12,6 +12,10 @@ module Bosh::Director
         azs = parse_availability_zones(cloud_manifest)
         az_list = CloudPlanner.index_by_name(azs)
         networks = parse_networks(cloud_manifest, global_network_resolver, azs)
+        networks.each do |network|
+          p "network name: #{network.name}"
+          p "network managed: #{!!network.managed}"
+        end
         resource_pools = parse_resource_pools(cloud_manifest)
         vm_types = parse_vm_types(cloud_manifest)
         vm_extensions = parse_vm_extensions(cloud_manifest)

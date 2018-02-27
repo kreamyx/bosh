@@ -51,6 +51,7 @@ module Bosh
         private
 
         def parse_from_manifest(manifest, cloud_config_consolidator, runtime_config_consolidator, options)
+          # KE: this function is called once during a deployment
           @manifest_validator.validate(manifest.manifest_hash, manifest.cloud_config_hash)
 
           migrated_manifest_object, cloud_manifest = @deployment_manifest_migrator.migrate(manifest, manifest.cloud_config_hash)
@@ -89,6 +90,8 @@ module Bosh
           global_network_resolver = GlobalNetworkResolver.new(deployment, Config.director_ips, @logger)
           ip_provider_factory = IpProviderFactory.new(deployment.using_global_networking?, @logger)
           deployment.cloud_planner = CloudManifestParser.new(@logger).parse(cloud_manifest, global_network_resolver, ip_provider_factory)
+
+          # KE: May be here the code should be added
 
           # this is where the instance groups and stuff are added to the planner
           # very important. parse is called.
