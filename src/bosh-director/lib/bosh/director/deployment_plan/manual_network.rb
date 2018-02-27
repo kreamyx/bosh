@@ -7,10 +7,11 @@ module Bosh::Director
       include IpUtil
 
       attr_reader :subnets
+      attr_reader :managed
 
       def self.parse(network_spec, availability_zones, global_network_resolver, logger)
         name = safe_property(network_spec, "name", :class => String)
-
+        managed = safe_property(network_spec, "managed", :default => false)
         reserved_ranges = global_network_resolver.reserved_ranges
         subnet_specs = safe_property(network_spec, 'subnets', :class => Array)
         subnets = []
@@ -24,12 +25,13 @@ module Bosh::Director
           subnets << new_subnet
         end
         validate_all_subnets_use_azs(subnets, name)
-        new(name, subnets, logger)
+        new(name, managed, subnets, logger)
       end
 
-      def initialize(name, subnets, logger)
+      def initialize(name, managed, subnets, logger)
         super(name, TaggedLogger.new(logger, 'network-configuration'))
         @subnets = subnets
+        @managed = managed
       end
 
       ##
