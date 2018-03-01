@@ -92,7 +92,7 @@ module Bosh
           ip_provider_factory = IpProviderFactory.new(deployment.using_global_networking?, @logger)
           deployment.cloud_planner = CloudManifestParser.new(@logger).parse(cloud_manifest, global_network_resolver, ip_provider_factory)
 
-          # KE: May be here the code should be added
+          
 
           # this is where the instance groups and stuff are added to the planner
           # very important. parse is called.
@@ -115,6 +115,27 @@ module Bosh
               addon.add_to_deployment(deployment)
             end
             deployment.add_variables(parsed_runtime_config.variables)
+          end
+          # KE: May be here the code should be added
+          # This code should call the CPI and create the subnets
+          # also update the database
+          if Config.network_lifecycle_enabled?
+            deployment.networks.each do |network|
+              if network.managed && !Bosh::Director::Models::Network.first(name: network.name)
+                # call cpi to create network subnets
+                # update the network database tables
+                nw = Bosh::Director::Models::Network.new(name: network.name, type: "manual", cid: 5, created_at: Time.now)
+                nw.save
+                network.subnets.each do |subnet|
+                  p "creating subnets #{subnet.cloud_properties}"
+                  sn = Bosh::Director::Models::Subnet.new(range: subnet.range, gateway: subnet.gateway, dns: JSON.dump(subnet.dns), static: JSON.dump(subnet.static_ips.to_a), reserved: JSON.dump(subnet.restricted_ips.to_a), cloud_properties: JSON.dump(subnet.cloud_properties), az: JSON.dump(subnet.availability_zone_names))
+                  nw.add_subnet(sn)
+                  sn.save
+                end
+                deployment.model.add_network(nw)
+                p "created network entry in the database #{network.name}"
+              end
+            end
           end
 
           DeploymentValidator.new.validate(deployment)
