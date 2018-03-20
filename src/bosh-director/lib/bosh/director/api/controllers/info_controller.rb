@@ -26,6 +26,9 @@ module Bosh::Director
               'status' => @powerdns_manager.dns_enabled?,
               'extras' => {'domain_name' => @powerdns_manager.root_domain}
             },
+            'network_lifecycle' => {
+              'status' => Config.network_lifecycle_enabled?,
+            },
             'compiled_package_cache' => {
               'status' => Config.use_compiled_package_cache?,
               'extras' => {'provider' => Config.compiled_package_cache_provider}
