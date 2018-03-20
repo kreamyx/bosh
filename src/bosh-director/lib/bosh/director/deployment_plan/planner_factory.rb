@@ -123,6 +123,18 @@ module Bosh
             deployment.networks.each do |network|
               if network.managed && !Bosh::Director::Models::Network.first(name: network.name)
                 # call cpi to create network subnets
+                network.subnets.each do |subnet|
+                  cloud_factory = CloudFactory.create_with_latest_configs
+                  cpi = cloud_factory.get_for_az(subnet.availability_zone_names[0])
+                  # p "Got the cpi for the specific az"
+                  # call cpi create_network on each subnet
+                  network_create_results = cpi.create_subnet(subnet.vds_name, subnet.pg_name)
+                  p "port name is #{port_name}"
+                  p "cid is #{network_create_results["cid"]}"
+                  # return values that will be stored in the database
+                  subnet.cloud_properties = network_create_results["cloud_properties"]
+                end
+
                 # update the network database tables
                 nw = Bosh::Director::Models::Network.new(name: network.name, type: "manual", cid: 5, created_at: Time.now)
                 nw.save
@@ -134,6 +146,15 @@ module Bosh
                 end
                 deployment.model.add_network(nw)
                 p "created network entry in the database #{network.name}"
+              end
+            end
+          end
+
+          if Config.network_lifecycle_enabled?
+            deployment.networks.each do |network|
+              if network.managed
+                # fill the network details from the database
+                # Shall we change the cloud config in the fly here?!! Probably not
               end
             end
           end

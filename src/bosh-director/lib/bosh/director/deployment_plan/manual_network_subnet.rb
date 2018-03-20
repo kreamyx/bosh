@@ -4,8 +4,9 @@ module Bosh::Director
       extend ValidationHelper
       extend IpUtil
 
-      attr_reader :network_name, :range, :gateway, :dns, :cloud_properties,
-        :netmask, :availability_zone_names, :restricted_ips, :static_ips
+      attr_reader :network_name
+      attr_accessor :range, :gateway, :dns, :cloud_properties,
+      :netmask, :availability_zone_names, :restricted_ips, :static_ips
 
       def self.parse(network_name, subnet_spec, availability_zones, legacy_reserved_ranges)
         @logger = Config.logger
