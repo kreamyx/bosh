@@ -4,8 +4,12 @@ module Bosh::Director
       include Bosh::Director::IpUtil
       extend ValidationHelper
 
+      attr_reader :managed
+
       def self.parse(network_spec, availability_zones, logger)
         name = safe_property(network_spec, 'name', :class => String)
+        managed = safe_property(network_spec, "managed", :default => false)
+
         Canonicalizer.canonicalize(name)
         logger = TaggedLogger.new(logger, 'network-configuration')
         name_server_parser = NetworkParser::NameServersParser.new
@@ -29,7 +33,7 @@ module Bosh::Director
           subnets = [DynamicNetworkSubnet.new(name_servers, cloud_properties, nil)]
         end
 
-        new(name, subnets, logger)
+        new(name, managed, subnets, logger)
       end
 
       def self.validate_network_has_no_key_while_subnets_present(key, name, network_spec)
@@ -76,9 +80,10 @@ module Bosh::Director
         end
       end
 
-      def initialize(name, subnets, logger)
+      def initialize(name, managed, subnets, logger)
         super(name, logger)
         @subnets = subnets
+        @managed = managed
       end
 
       attr_reader :subnets
