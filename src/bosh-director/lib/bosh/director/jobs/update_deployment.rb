@@ -82,11 +82,9 @@ module Bosh::Director
           event_log_stage.advance_and_track('Preparing deployment') do
             planner_factory = DeploymentPlan::PlannerFactory.create(logger)
             deployment_plan = planner_factory.create_from_manifest(deployment_manifest_object, cloud_config_models, runtime_config_models, @options)
-            p "calling the assembler"
             deployment_assembler = DeploymentPlan::Assembler.create(deployment_plan)
             dns_encoder = LocalDnsEncoderManager.new_encoder_with_updated_index(deployment_plan)
             generate_variables_values(deployment_plan.variables, @deployment_name) if is_deploy_action
-            p "calling the assembler's bind_models"
             deployment_assembler.bind_models({:should_bind_new_variable_set => is_deploy_action})
           end
 

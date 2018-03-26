@@ -4,7 +4,6 @@ Sequel.migration do
         create_table :networks do
             primary_key :id
             String :name, null: false
-            String :cid, null: false
             String :type, null: false
             Time :created_at, null: false
             Boolean :orphaned, :default => false
@@ -14,12 +13,8 @@ Sequel.migration do
 
         create_table :subnets do
             primary_key :id
-            String :range
-            String :gateway
-            String :dns
-            String :reserved
-            String :static
-            String :az
+            String :cid, null: false
+            integer :order 
             String :cloud_properties
             foreign_key :network_id, :networks, :null => false, :on_delete => :cascade
         end

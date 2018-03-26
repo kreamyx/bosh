@@ -86,7 +86,7 @@ module Bosh::Director
         @managed = managed
       end
 
-      attr_reader :subnets
+      attr_accessor :subnets
 
       ##
       # Returns the network settings for the specific reservation.
