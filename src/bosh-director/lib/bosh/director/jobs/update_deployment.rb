@@ -98,6 +98,7 @@ module Bosh::Director
             # that's where the links resolver is created
             deployment_assembler.bind_models({is_deploy_action: is_deploy_action, should_bind_new_variable_set: is_deploy_action})
 
+
           end
 
           if deployment_plan.instance_models.any?(&:ignore)

@@ -6,7 +6,7 @@ module Bosh::Director
       extend ValidationHelper
       include IpUtil
 
-      attr_reader :subnets
+      attr_accessor :subnets
       attr_reader :managed
 
       def self.parse(network_spec, availability_zones, global_network_resolver, logger)

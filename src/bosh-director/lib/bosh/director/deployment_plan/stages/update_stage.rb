@@ -13,6 +13,7 @@ module Bosh::Director
         def perform
           begin
             @logger.info('Updating deployment')
+            CreateNetworkStage.new(@logger, @deployment_plan).perform
             PreCleanupStage.new(@logger, @deployment_plan).perform
             UpdateActiveVmCpisStage.new(@logger, @deployment_plan).perform
             setup_stage.perform
