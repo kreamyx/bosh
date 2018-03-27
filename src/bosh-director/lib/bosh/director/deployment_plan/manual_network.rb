@@ -25,13 +25,19 @@ module Bosh::Director
           subnets << new_subnet
         end
         validate_all_subnets_use_azs(subnets, name)
-        new(name, managed, subnets, logger)
+        manual_network = new(name, subnets, logger)
+        manual_network.set_managed(managed)
+        manual_network
       end
 
-      def initialize(name, managed, subnets, logger)
+      def set_managed(managed)
+        @managed = managed
+      end
+
+      def initialize(name, subnets, logger)
         super(name, TaggedLogger.new(logger, 'network-configuration'))
         @subnets = subnets
-        @managed = managed
+        @managed = false
       end
 
       ##
