@@ -175,8 +175,6 @@ module Bosh::Director
 
         # KE: the network lifecycle feature
         @network_lifecycle_enabled = config.fetch('network_lifecycle', {}).fetch('enabled', false)
-        # KE: to remove         
-        p "network lifecycle is #{@network_lifecycle_enabled}"
 
         # UUID in config *must* only be used for tests
         @uuid = config['uuid'] || Bosh::Director::Models::DirectorAttribute.find_or_create_uuid(@logger)

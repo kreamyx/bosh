@@ -39,6 +39,17 @@ module Bosh::Director
         end
       end
 
+      if Config.network_lifecycle_enabled?
+        event_log_stage = @event_log.begin_stage('Updating managed networks', deployment_model.networks.count)
+        @logger.info('Updating managed networks')
+        deployment_model.networks.each do |network|
+          event_log_stage.advance_and_track(network.name) do
+            p "updating managed network #{network.name}"
+            network.destroy
+          end
+        end
+      end
+
       event_log_stage.advance_and_track('Destroying deployment') do
         @logger.info('Destroying deployment')
         deployment_model.destroy
