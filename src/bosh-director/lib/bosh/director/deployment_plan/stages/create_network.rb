@@ -23,7 +23,7 @@ module Bosh::Director
                     @event_log_stage = Config.event_log.begin_stage('Creating managed networks')
                     @deployment_plan.networks.each do |network|
                         if managed_network?(network)
-                            if !Bosh::Director::Models::Network.first(name: network.name)
+                            unless Bosh::Director::Models::Network.first(name: network.name)
                                 @logger.info("Creating network: #{network.name}")
                                 @event_log_stage.advance_and_track("#{network.name}") do                                  
                                     # update the network database tables
@@ -47,6 +47,10 @@ module Bosh::Director
                             end             
                             # the network is in the database
                             db_network = Bosh::Director::Models::Network.first(name: network.name)
+                            if db_network.orphaned
+                                db_network.orphaned = false
+                                db_network.save
+                            end
                             # add relation between deployment and network
                             @deployment_plan.model.add_network(db_network)
                             network.subnets.each_with_index do |subnet, order|

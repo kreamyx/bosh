@@ -44,8 +44,11 @@ module Bosh::Director
         @logger.info('Updating managed networks')
         deployment_model.networks.each do |network|
           event_log_stage.advance_and_track(network.name) do
-            p "updating managed network #{network.name}"
-            network.destroy
+            if network.deployments.size == 1
+              network.orphaned = true
+              network.orphaned_at = Time.now
+              network.save
+            end            
           end
         end
       end
