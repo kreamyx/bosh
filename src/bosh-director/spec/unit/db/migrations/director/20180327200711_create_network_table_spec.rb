@@ -29,14 +29,14 @@ module Bosh::Director
         created_at: created_at
       }
 
-      expect(db[:networks].first).to eq({
-        id: 1,
-        name: 'test_network_1',
-        type: 'manual',
-        orphaned_at: nil,
-        created_at: created_at,
-        orphaned: false
-      })
+      # expect(db[:networks].first).to eq({
+      #   id: 1,
+      #   name: 'test_network_1',
+      #   type: 'manual',
+      #   orphaned_at: nil,
+      #   created_at: created_at,
+      #   orphaned: false
+      # })
 
       db[:subnets] << {
         cid: 'subnetid-12345',
