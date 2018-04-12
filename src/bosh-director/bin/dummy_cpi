@@ -55,7 +55,6 @@ begin
 
   command = request['method']
   arguments = request['arguments']
-  print "args are #{arguments}"
   context = request['context']
   requested_api_version = request['api_version']
 
