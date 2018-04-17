@@ -17,6 +17,14 @@ module Bosh::Director
                 network.managed
             end
 
+            def reverse_parse_subnet(subnet)
+                cpi_input = {}
+                cpi_input['range'] = subnet.range.to_s if subnet.range
+                cpi_input['cloud_properties'] = subnet.cloud_properties if subnet.cloud_properties
+                cpi_input['gateway'] = subnet.gateway.to_s if subnet.gateway
+                cpi_input
+            end
+
             def create_networks
                 if Config.network_lifecycle_enabled?
                     @logger.info("Network lifecycle check")
@@ -33,12 +41,7 @@ module Bosh::Director
                                     network.subnets.each_with_index do |subnet, order|
                                         cloud_factory = CloudFactory.create_with_latest_configs
                                         cpi = cloud_factory.get_for_az(subnet.availability_zone_names[0])
-                                        # KE: Here you should handle the errors
-                                        ### Here add error handling
-                                        #### Error Handling!!!
-                                        # call cpi create_subnet on each subnet
-                                        # network_create_results = cpi.create_subnet(network.cloud_properties)
-                                        network_create_results = {"cid" => "subnet-12345", "cloud_properties" => {"name" => "subnet-name"}}
+                                        network_create_results = cpi.create_subnet(JSON.dump(reverse_parse_subnet(subnet)))
                                         sn = Bosh::Director::Models::Subnet.new(cid: network_create_results["cid"], cloud_properties: JSON.dump(network_create_results["cloud_properties"]), order: order)
                                         nw.add_subnet(sn)
                                         sn.save

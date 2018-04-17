@@ -115,55 +115,6 @@ module Bosh
             end
             deployment.add_variables(parsed_runtime_config.variables)
           end
-          # KE: May be here the code should be added
-          # This code should call the CPI and create the subnets
-          # also update the database
-          # if Config.network_lifecycle_enabled?
-          #   deployment.networks.each do |network|
-          #     if managed_network?(network)
-          #       # if the network is not in the database, create it
-          #       if !Bosh::Director::Models::Network.first(name: network.name)
-          #         p "Creating the Network from scratch"
-          #         # update the network database tables
-          #         nw = Bosh::Director::Models::Network.new(name: network.name, type: "manual", orphaned: false, created_at: Time.now)
-          #         nw.save
-          #         # call cpi to create network subnets
-          #         network.subnets.each_with_index do |subnet, order|
-          #           cloud_factory = CloudFactory.create_with_latest_configs
-          #           cpi = cloud_factory.get_for_az(subnet.availability_zone_names[0])
-          #           # KE: Here you should handle the errors
-          #           ### Here add error handling
-          #           #### Error Handling!!!
-          #           # call cpi create_subnet on each subnet
-          #           # network_create_results = cpi.create_subnet(network.cloud_properties)
-          #           network_create_results = {"cid" => "subnet-12345", "cloud_properties" => {"name" => "subnet-name"}}
-          #           sn = Bosh::Director::Models::Subnet.new(cid: network_create_results["cid"], cloud_properties: JSON.dump(network_create_results["cloud_properties"]), order: order)
-          #           nw.add_subnet(sn)
-          #           sn.save
-          #         end
-          #         # if everything is successful, #else clean up the database tables
-          #         # Error handling here too                  
-          #       end             
-          #       # the network is in the database
-          #       db_network = Bosh::Director::Models::Network.first(name: network.name)
-          #       # add relation between deployment and network
-          #       deployment.model.add_network(db_network)
-          #       network.subnets.each_with_index do |subnet, order|
-          #         db_subnet = db_network.subnets.find do |sn|
-          #           sn.order == order
-          #         end
-          #         if db_subnet != nil
-          #           p "subnet cloud properties #{db_subnet.cloud_properties}"
-          #           subnet.cloud_properties = JSON.load(db_subnet.cloud_properties)
-          #         else
-          #           # raise an error here
-          #           # cant find a subnet with this name
-          #           # this should never happen
-          #         end
-          #       end
-          #     end
-          #   end
-          # end
 
           DeploymentValidator.new.validate(deployment)
 
