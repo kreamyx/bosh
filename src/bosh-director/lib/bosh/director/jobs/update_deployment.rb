@@ -117,6 +117,8 @@ module Bosh::Director
               return "/deployments/#{deployment_plan.name}"
             else
               # here are the specific steps to create a deployment
+              create_network_stage(deployment_plan).perform
+
               # first: compilation stage
               compilation_step(deployment_plan).perform
 
@@ -207,6 +209,10 @@ module Bosh::Director
 
       def compilation_step(deployment_plan)
         DeploymentPlan::Stages::PackageCompileStage.create(deployment_plan)
+      end
+
+      def create_network_stage(deployment_plan)
+        DeploymentPlan::Stages::CreateNetworkStage.new(Config.logger, deployment_plan)
       end
 
       def update_stage(deployment_plan, dns_encoder)
