@@ -39,7 +39,7 @@ module Bosh::Director
                                     nw.save
                                     # call cpi to create network subnets
                                     network.subnets.each_with_index do |subnet, order|
-                                        cloud_factory = CloudFactory.create_with_latest_configs
+                                        cloud_factory = AZCloudFactory.create_with_latest_configs(@deployment_plan.model)
                                         cpi = cloud_factory.get_for_az(subnet.availability_zone_names[0])
                                         network_create_results = cpi.create_subnet(JSON.dump(reverse_parse_subnet(subnet)))
                                         sn = Bosh::Director::Models::Subnet.new(cid: network_create_results["cid"], cloud_properties: JSON.dump(network_create_results["cloud_properties"]), order: order)
