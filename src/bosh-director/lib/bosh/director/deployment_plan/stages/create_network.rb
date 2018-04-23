@@ -21,7 +21,7 @@ module Bosh::Director
                 cpi_input = {}
                 cpi_input['range'] = subnet.range.to_s if subnet.range
                 cpi_input['cloud_properties'] = subnet.cloud_properties if subnet.cloud_properties
-                cpi_input['gateway'] = subnet.gateway.to_s if subnet.gateway
+                cpi_input['gateway'] = subnet.gateway.ip if subnet.gateway
                 cpi_input
             end
 
