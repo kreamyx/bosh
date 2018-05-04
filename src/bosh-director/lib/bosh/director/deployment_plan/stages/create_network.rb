@@ -33,18 +33,33 @@ module Bosh::Director
                         if managed_network?(network)
                             unless Bosh::Director::Models::Network.first(name: network.name)
                                 @logger.info("Creating network: #{network.name}")
-                                @event_log_stage.advance_and_track("#{network.name}") do                                  
+                                @event_log_stage.advance_and_track("#{network.name}") do
                                     # update the network database tables
                                     nw = Bosh::Director::Models::Network.new(name: network.name, type: "manual", orphaned: false, created_at: Time.now)
                                     nw.save
-                                    # call cpi to create network subnets
-                                    network.subnets.each_with_index do |subnet, order|
-                                        cloud_factory = AZCloudFactory.create_with_latest_configs(@deployment_plan.model)
-                                        cpi = cloud_factory.get_for_az(subnet.availability_zone_names[0])
-                                        network_create_results = cpi.create_subnet(reverse_parse_subnet(subnet))
-                                        sn = Bosh::Director::Models::Subnet.new(cid: network_create_results["network_cid"], cloud_properties: JSON.dump(network_create_results["cloud_properties"]), order: order)
-                                        nw.add_subnet(sn)
-                                        sn.save
+                                    begin
+                                        rollback = {}
+                                        # call cpi to create network subnets
+                                        network.subnets.each_with_index do |subnet, order|
+                                            cloud_factory = AZCloudFactory.create_with_latest_configs(@deployment_plan.model)
+                                            cpi = cloud_factory.get_for_az(subnet.availability_zone_names[0])
+                                            network_create_results = cpi.create_subnet(reverse_parse_subnet(subnet))
+                                            network_cid = network_create_results["network_cid"]
+                                            rollback[network_cid] = cpi
+                                            sn = Bosh::Director::Models::Subnet.new(cid: network_cid, cloud_properties: JSON.dump(network_create_results["cloud_properties"]), order: order)
+                                            nw.add_subnet(sn)
+                                            sn.save
+                                        end
+                                    rescue Exception => e
+                                        rollback.each do |cid, cpi|
+                                            begin
+                                                cpi.delete_subnet(cid)
+                                            rescue Exception => e
+                                                @logger.info("failed to delete subnet #{cid}: #{e.message}")
+                                            end
+                                        end
+                                        nw.destroy
+                                        raise e
                                     end
                                 end                
                             end             
@@ -56,6 +71,8 @@ module Bosh::Director
                             end
                             # add relation between deployment and network
                             @deployment_plan.model.add_network(db_network)
+
+                            # fetch the subnet cloud properties from the database
                             network.subnets.each_with_index do |subnet, order|
                                 db_subnet = db_network.subnets.find do |sn|
                                     sn.order == order
