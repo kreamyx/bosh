@@ -55,6 +55,7 @@ module Bosh::Clouds
     def create_vm(*arguments); invoke_cpi_method(__method__.to_s, *arguments); end
     def delete_vm(*arguments); invoke_cpi_method(__method__.to_s, *arguments); end
     def create_subnet(*arguments); invoke_cpi_method(__method__.to_s, *arguments); end
+    def delete_subnet(*arguments); invoke_cpi_method(__method__.to_s, *arguments); end
     def has_vm(*arguments); invoke_cpi_method(__method__.to_s, *arguments); end
     def reboot_vm(*arguments); invoke_cpi_method(__method__.to_s, *arguments); end
     def set_vm_metadata(*arguments); invoke_cpi_method(__method__.to_s, *arguments); end
