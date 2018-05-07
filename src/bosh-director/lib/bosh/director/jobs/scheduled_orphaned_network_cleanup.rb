@@ -1,6 +1,6 @@
 module Bosh::Director
     module Jobs
-      class ScheduledOrphanedDiskCleanup < BaseJob
+      class ScheduledOrphanedNetworkCleanup < BaseJob
         @queue = :normal
   
         def self.job_type
