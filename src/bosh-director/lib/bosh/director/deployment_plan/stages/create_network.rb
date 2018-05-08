@@ -53,13 +53,15 @@ module Bosh::Director
                                     rescue Exception => e
                                         rollback.each do |cid, cpi|
                                             begin
+                                                @logger.info("deleting subnet #{cid}")
                                                 cpi.delete_subnet(cid)
                                             rescue Exception => e
                                                 @logger.info("failed to delete subnet #{cid}: #{e.message}")
                                             end
                                         end
+                                        @logger.info("deleting network #{nw.name}")
                                         nw.destroy
-                                        raise e
+                                        raise "deployment failed during creating managed networks: #{e.message}"
                                     end
                                 end                
                             end             
