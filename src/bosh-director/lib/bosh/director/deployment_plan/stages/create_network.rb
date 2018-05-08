@@ -50,7 +50,7 @@ module Bosh::Director
                                             nw.add_subnet(sn)
                                             sn.save
                                         end
-                                    rescue Exception => e
+                                    rescue => e
                                         rollback.each do |cid, cpi|
                                             begin
                                                 @logger.info("deleting subnet #{cid}")
