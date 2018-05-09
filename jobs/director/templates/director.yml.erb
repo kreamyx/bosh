@@ -126,8 +126,8 @@ params['scheduled_jobs'] << {
 
 params['scheduled_jobs'] << {
   'command' => 'ScheduledOrphanedNetworkCleanup',
-  'schedule' => p('director.networks.cleanup_schedule'),
-  'params' => [{'max_orphaned_age_in_days' => p('director.networks.max_orphaned_age_in_days')}]
+  'schedule' => p('director.network_lifecycle.cleanup_schedule'),
+  'params' => [{'max_orphaned_age_in_days' => p('director.network_lifecycle.max_orphaned_age_in_days')}]
 }
 
 params['scheduled_jobs'] << {

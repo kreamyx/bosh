@@ -52,6 +52,8 @@ describe 'director.yml.erb' do
         'flush_arp' => false,
         'network_lifecycle' => {
           'enabled' => false,
+          'max_orphaned_age_in_days' => 5,
+          'cleanup_schedule' => '0 0,30 * * * * UTC',
         },
         'local_dns' => {
           'enabled' => true,
