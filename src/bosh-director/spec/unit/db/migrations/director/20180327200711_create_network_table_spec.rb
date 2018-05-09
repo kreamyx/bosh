@@ -49,7 +49,7 @@ module Bosh::Director
         id: 1,
         cid: 'subnetid-12345',
         order: 0,
-        cpi: '',
+        cpi: 'vsphere',
         cloud_properties: '{"name": "subnet-name"}',
         network_id: 1
       })
