@@ -40,6 +40,7 @@ module Bosh::Director
       db[:subnets] << {
         cid: 'subnetid-12345',
         order: 0,
+        cpi: 'vsphere',
         cloud_properties: '{"name": "subnet-name"}',
         network_id: 1
       }
@@ -48,6 +49,7 @@ module Bosh::Director
         id: 1,
         cid: 'subnetid-12345',
         order: 0,
+        cpi: '',
         cloud_properties: '{"name": "subnet-name"}',
         network_id: 1
       })
