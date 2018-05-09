@@ -16,6 +16,7 @@ Sequel.migration do
             String :cid, null: false
             integer :order 
             String :cloud_properties
+            String :cpi
             foreign_key :network_id, :networks, :null => false, :on_delete => :cascade
         end
 
