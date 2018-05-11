@@ -58,6 +58,7 @@ begin
   context = request['context']
   requested_api_version = request['api_version']
 
+
   dummy = Bosh::Clouds::Dummy.new(cpi_config, context, requested_api_version)
 
   result = dummy.send(command, *arguments)

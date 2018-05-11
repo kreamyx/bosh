@@ -205,6 +205,7 @@ module Bosh::Dev::Sandbox
         director_fix_stateful_nodes: @director_fix_stateful_nodes,
         dns_enabled: @dns_enabled,
         local_dns: @local_dns,
+        network_lifecycle: @network_lifecycle,
         external_cpi_config: external_cpi_config,
         cloud_storage_dir: cloud_storage_dir,
         config_server_enabled: @config_server_enabled,
@@ -325,6 +326,7 @@ module Bosh::Dev::Sandbox
       @director_fix_stateful_nodes = options.fetch(:director_fix_stateful_nodes, false)
       @dns_enabled = options.fetch(:dns_enabled, true)
       @local_dns = options.fetch(:local_dns, {enabled: false, include_index: false, use_dns_addresses: false})
+      @network_lifecycle = options.fetch(:network_lifecycle, {enabled: false})
       @nginx_service.reconfigure(options[:ssl_mode])
       @uaa_service.reconfigure(options[:uaa_encryption])
       @users_in_manifest = options.fetch(:users_in_manifest, true)

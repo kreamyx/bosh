@@ -13,8 +13,9 @@ module Bosh::Director
 
             private
 
+            # a managed network is one that is manual and marked as managed
             def managed_network?(network)
-                network.managed
+                network.manual? && network.managed
             end
 
             def reverse_parse_subnet(subnet)
@@ -42,8 +43,12 @@ module Bosh::Director
                                         # call cpi to create network subnets
                                         network.subnets.each_with_index do |subnet, order|
                                             cloud_factory = AZCloudFactory.create_with_latest_configs(@deployment_plan.model)
-                                            cpi = cloud_factory.get_for_az(subnet.availability_zone_names[0])
-                                            cpi_name = cloud_factory.get_name_for_az(subnet.availability_zone_names[0])
+                                            cpi_name = ""
+                                            if subnet.availability_zone_names != nil && subnet.availability_zone_names.count != 0
+                                                cpi_name = cloud_factory.get_name_for_az(subnet.availability_zone_names.first)
+                                            end
+                                            cpi = cloud_factory.get(cpi_name)
+                                            
                                             network_create_results = cpi.create_subnet(reverse_parse_subnet(subnet))
                                             network_cid = network_create_results["network_cid"]
                                             rollback[network_cid] = cpi

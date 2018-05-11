@@ -220,6 +220,23 @@ module Bosh
         FileUtils.rm(disk_file(disk_id))
       end
 
+      CREATE_SUBNET_SCHEMA = Membrane::SchemaParser.parse { {subnet_definition: Hash} }
+      def create_subnet(subnet_definition)
+        validate_and_record_inputs(CREATE_SUBNET_SCHEMA, __method__, subnet_definition)
+        network_id = SecureRandom.hex
+        file = network_file(network_id)
+        FileUtils.mkdir_p(File.dirname(file))
+        network_info = JSON.generate(subnet_definition)
+        File.write(file, network_info)
+        { network_cid: network_id, cloud_properties: { name: network_id } }
+      end
+
+      DELETE_SUBNET_SCHEMA = Membrane::SchemaParser.parse { {network_id: String} }
+      def delete_subnet(network_id)
+        validate_and_record_inputs(DELETE_SUBNET_SCHEMA, __method__, network_id)
+        FileUtils.rm(network_file(network_id))
+      end
+
       SNAPSHOT_DISK_SCHEMA = Membrane::SchemaParser.parse { {disk_id: String, metadata: Hash} }
       def snapshot_disk(disk_id, metadata)
         validate_and_record_inputs(SNAPSHOT_DISK_SCHEMA, __method__, disk_id, metadata)
@@ -499,6 +516,10 @@ module Bosh
 
       def disk_file(disk_id)
         File.join(@base_dir, 'disks', disk_id)
+      end
+
+      def network_file(network_id)
+        File.join(@base_dir, 'networks', network_id)
       end
 
       def disk_attached?(disk_id)
