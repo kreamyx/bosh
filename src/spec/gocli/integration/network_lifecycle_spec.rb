@@ -163,5 +163,95 @@ describe 'network lifecycle feature enabled', type: :integration do
         end
     end
 
-    # Write Another Integration Test For Cleanup When Create_Subnet FAILS 
+    it 'should create all subnets in the network definition' do
+        cloud_config_hash = Bosh::Spec::NewDeployments.simple_cloud_config
+        cloud_config_hash['networks'] = [{
+            'name' => 'a',
+            'type' => 'manual',
+            'managed' => true,
+            'subnets' => [
+                {
+                    'range' => '192.168.10.0/24',
+                    'gateway' => '192.168.10.1',
+                    'cloud_properties' => {'t0_id' => "123456"},
+                    'dns' => ['8.8.8.8']
+                },
+                {
+                    'range' => '192.168.20.0/24',
+                    'gateway' => '192.168.20.1',
+                    'cloud_properties' => {'t0_id' => "123456"},
+                    'dns' => ['8.8.8.8']
+                },
+                {
+                    'range' => '192.168.30.0/24',
+                    'gateway' => '192.168.30.1',
+                    'cloud_properties' => {'t0_id' => "123456"},
+                    'dns' => ['8.8.8.8']
+                },
+                {
+                    'range' => '192.168.40.0/24',
+                    'gateway' => '192.168.40.1',
+                    'cloud_properties' => {'t0_id' => "123456"},
+                    'dns' => ['8.8.8.8']
+                }
+            ],
+        }]
+        manifest_hash = Bosh::Spec::NewDeployments.simple_manifest_with_instance_groups
+        manifest_hash['instance_groups'].first['instances'] = 1
+        manifest_hash['instance_groups'].first['networks'] = [{'name' => 'a'}]
+        upload_cloud_config(cloud_config_hash: cloud_config_hash)
+        deploy_from_scratch(cloud_config_hash: cloud_config_hash, manifest_hash: manifest_hash)
+        create_subnet_invocations = current_sandbox.cpi.invocations_for_method('create_subnet')
+        expect(create_subnet_invocations.count).to eq(4)
+        networks = current_sandbox.cpi.network_cids
+        expect(networks.count).to eq(4)      
+    end
+
+    it 'should clean up subnets if network creation stage fails' do
+        cloud_config_hash = Bosh::Spec::NewDeployments.simple_cloud_config
+        cloud_config_hash['networks'] = [{
+            'name' => 'a',
+            'type' => 'manual',
+            'managed' => true,
+            'subnets' => [
+                {
+                    'range' => '192.168.10.0/24',
+                    'gateway' => '192.168.10.1',
+                    'cloud_properties' => {'t0_id' => "123456"},
+                    'dns' => ['8.8.8.8']
+                },
+                {
+                    'range' => '192.168.20.0/24',
+                    'gateway' => '192.168.20.1',
+                    'cloud_properties' => {'t0_id' => "123456"},
+                    'dns' => ['8.8.8.8']
+                },
+                {
+                    'range' => '192.168.30.0/24',
+                    'gateway' => '192.168.30.1',
+                    'cloud_properties' => {'t0_id' => "123456"},
+                    'dns' => ['8.8.8.8']
+                },
+                {
+                    'range' => '192.168.40.0/24',
+                    'gateway' => '192.168.40.1',
+                    'cloud_properties' => {'error' => "no t0 router id"},
+                    'dns' => ['8.8.8.8']
+                }
+            ],
+        }]
+        manifest_hash = Bosh::Spec::NewDeployments.simple_manifest_with_instance_groups
+        manifest_hash['instance_groups'].first['instances'] = 1
+        manifest_hash['instance_groups'].first['networks'] = [{'name' => 'a'}]
+        upload_cloud_config(cloud_config_hash: cloud_config_hash)
+        expect{
+            deploy_from_scratch(cloud_config_hash: cloud_config_hash, manifest_hash: manifest_hash)
+        }.to raise_error
+        create_subnet_invocations = current_sandbox.cpi.invocations_for_method('create_subnet')
+        expect(create_subnet_invocations.count).to eq(4)
+        delete_subnet_invocations = current_sandbox.cpi.invocations_for_method('delete_subnet')
+        expect(delete_subnet_invocations.count).to eq(3)
+        networks = current_sandbox.cpi.network_cids
+        expect(networks.count).to eq(0)      
+    end
 end

@@ -223,6 +223,9 @@ module Bosh
       CREATE_SUBNET_SCHEMA = Membrane::SchemaParser.parse { {subnet_definition: Hash} }
       def create_subnet(subnet_definition)
         validate_and_record_inputs(CREATE_SUBNET_SCHEMA, __method__, subnet_definition)
+        if subnet_definition['cloud_properties'].has_key?("error")
+          raise subnet_definition['cloud_properties']['error']
+        end
         network_id = SecureRandom.hex
         file = network_file(network_id)
         FileUtils.mkdir_p(File.dirname(file))
@@ -308,6 +311,11 @@ module Bosh
       def disk_cids
         # Shuffle so that no one relies on the order of disks
         Dir.glob(disk_file('*')).map { |disk| File.basename(disk) }.shuffle
+      end
+
+      def network_cids
+        # Shuffle so that no one relies on the order of networks
+        Dir.glob(network_file('*')).map { |network| File.basename(network) }.shuffle
       end
 
       def kill_agents
