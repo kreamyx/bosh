@@ -6,7 +6,6 @@ module Bosh::Director
 
       def self.parse(network_spec, availability_zones, logger)
         name = safe_property(network_spec, 'name', :class => String)
-
         Canonicalizer.canonicalize(name)
         logger = TaggedLogger.new(logger, 'network-configuration')
         name_server_parser = NetworkParser::NameServersParser.new
@@ -82,7 +81,7 @@ module Bosh::Director
         @subnets = subnets
       end
 
-      attr_accessor :subnets
+      attr_reader :subnets
 
       ##
       # Returns the network settings for the specific reservation.
