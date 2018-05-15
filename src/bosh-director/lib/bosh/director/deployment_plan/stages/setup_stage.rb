@@ -18,16 +18,6 @@ module Bosh::Director
 
         private
 
-        # def create_network
-        #   @logger.info('Creating missing Networks')
-        #   nw_model = Models::Network.new
-        #   # what is the network name?
-        #   nw_model.name = @deployment_plan.networks[0].name
-        #   nw_model.save
-        #   # add the network to the deployment
-        #   nw_model.add_deployment(@deployment_plan.model)
-        # end
-
         def persist_dns_az_encodings
           azs = @deployment_plan.availability_zones.map(&:name)
           LocalDnsEncoderManager.persist_az_names(azs)

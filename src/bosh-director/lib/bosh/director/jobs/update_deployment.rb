@@ -49,11 +49,8 @@ module Bosh::Director
           logger.debug("Runtime configs:\n#{Bosh::Director::RuntimeConfig::RuntimeConfigsConsolidator.new(runtime_config_models).raw_manifest}")
         end
 
-        # set the object deployment name
         @deployment_name = manifest_hash['name']
 
-        # this is probably if the method is update and not create
-        # this gets stemcells and releases stored in the database related to the deployment
         previous_releases, previous_stemcells = get_stemcells_and_releases
         context = {}
         parent_id = add_event
@@ -73,16 +70,11 @@ module Bosh::Director
           end
 
           manifest_text = @options.fetch('manifest_text', @manifest_text)
-          # i think this is where consolodiating all configs into onw deployment manifest object
           deployment_manifest_object = Manifest.load_from_hash(manifest_hash, manifest_text, cloud_config_models, runtime_config_models)
 
           @notifier = DeploymentPlan::Notifier.new(@deployment_name, Config.nats_rpc, logger)
           @notifier.send_start_event unless dry_run?
 
-          # steps:
-          # 1) Create planner factory
-          # 2) Create a deployment planner object
-          # 3) pass it to the assembler
           event_log_stage = @event_log.begin_stage('Preparing deployment', 1)
           event_log_stage.advance_and_track('Preparing deployment') do
             planner_factory = DeploymentPlan::PlannerFactory.create(logger)
@@ -116,13 +108,10 @@ module Bosh::Director
             if dry_run?
               return "/deployments/#{deployment_plan.name}"
             else
-              # here are the specific steps to create a deployment
               create_network_stage(deployment_plan).perform
 
-              # first: compilation stage
               compilation_step(deployment_plan).perform
 
-              # second: update stage
               update_stage(deployment_plan, dns_encoder).perform
 
               if check_for_changes(deployment_plan)

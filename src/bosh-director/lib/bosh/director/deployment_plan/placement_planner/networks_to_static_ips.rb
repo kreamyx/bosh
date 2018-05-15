@@ -6,7 +6,6 @@ module Bosh
           extend Bosh::Director::IpUtil
           include Bosh::Director::IpUtil
 
-          # this creates a network to a static ip hash
           def self.create(job_networks, desired_azs, job_name)
             networks_to_static_ips = {}
 
@@ -17,8 +16,6 @@ module Bosh
               subnets = job_network.deployment_network.subnets
 
               job_network.static_ips.each do |static_ip|
-                # for each static ip in the network, get the subnet that includes the ip address
-                # any static ip address that doesnt match a subnet should raise an error
                 subnet_for_ip = subnets.find { |subnet| subnet.static_ips.include?(static_ip) }
                 if subnet_for_ip.nil?
                   raise InstanceGroupNetworkInstanceIpMismatch,

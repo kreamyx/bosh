@@ -8,18 +8,14 @@ module Bosh
           def initialize(instance_plan_factory, network_planner, job_networks, job_name, desired_azs, logger)
             @instance_plan_factory = instance_plan_factory
             @network_planner = network_planner
-            # jo_networks are the networks in the instance group
             @job_networks = job_networks
-            # job_name is the instance group name
             @job_name = job_name
-            # a mapping between network => static-ip, zone
             @networks_to_static_ips = NetworksToStaticIps.create(@job_networks, desired_azs, job_name)
             @desired_azs = desired_azs
             @logger = logger
           end
 
           def place_and_match_in(desired_instances, existing_instance_models)
-            # Karim: look into these functions later ToDo
             @networks_to_static_ips.validate_azs_are_declared_in_job_and_subnets(@desired_azs)
             @networks_to_static_ips.validate_ips_are_in_desired_azs(@desired_azs)
             validate_ignored_instances_networks(existing_instance_models)
@@ -64,7 +60,6 @@ module Bosh
             end
           end
 
-          # Karim: return an array of instance plans for existing instances
           def place_existing_instance_plans(desired_instances, existing_instance_models)
             instance_plans = []
             # create existing instance plans with network plans that use specified static IPs
@@ -97,12 +92,9 @@ module Bosh
             instance_plans
           end
 
-          # Karim: return an array of instance plans for new instances
           def place_new_instance_plans(desired_instances, instance_plans)
             @networks_to_static_ips.distribute_evenly_per_zone
 
-            # Karim: For each new desired instance do the following:
-            # either call the static network reservation or the dynamic network reservation
             desired_instances.each do |desired_instance|
               instance_plan = @instance_plan_factory.desired_new_instance_plan(desired_instance)
               @job_networks.each do |network|
@@ -120,25 +112,20 @@ module Bosh
             instance_plans
           end
 
-          # this is where the magic of placement happens
           def create_network_plan_with_az(instance_plan, network, instance_plans)
             desired_instance = instance_plan.desired_instance
             instance = instance_plan.instance
             if desired_instance.az.nil?
-              # Karim: if there is no desired instances
               static_ip_to_azs = @networks_to_static_ips.next_ip_for_network(network)
-              # if only one matching az
               if static_ip_to_azs.az_names.size == 1
                 az_name = static_ip_to_azs.az_names.first
                 @logger.debug("Assigning az '#{az_name}' to instance '#{instance}'")
               else
-                # if more than one matching az, try to balance the instances
                 az_name = find_az_name_with_least_number_of_instances(static_ip_to_azs.az_names, instance_plans)
                 @logger.debug("Assigning az '#{az_name}' to instance '#{instance}' based on least number of instances")
               end
               desired_instance.az = to_az(az_name)
             else
-              # Karim: find az based on the network and the desired az
               static_ip_to_azs = @networks_to_static_ips.find_by_network_and_az(network, desired_instance.availability_zone)
             end
             if static_ip_to_azs.nil?

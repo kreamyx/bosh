@@ -4,12 +4,9 @@ module Bosh::Director
       extend ValidationHelper
       extend IpUtil
 
-      # ToDo: Besides cloud properties, what else should be writable
-      # ToDo: needs further investigation
       attr_reader :network_name, :range, :gateway, :dns, :netmask, :availability_zone_names, :restricted_ips, :static_ips
       attr_accessor :cloud_properties
       
-
       def self.parse(network_name, subnet_spec, availability_zones, legacy_reserved_ranges)
         @logger = Config.logger
 

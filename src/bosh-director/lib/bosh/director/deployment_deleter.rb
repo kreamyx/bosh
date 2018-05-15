@@ -40,16 +40,16 @@ module Bosh::Director
       end
 
       if Config.network_lifecycle_enabled?
-        event_log_stage = @event_log.begin_stage('Updating managed networks', deployment_model.networks.count)
-        @logger.info('Updating managed networks')
         deployment_model.networks.each do |network|
-          event_log_stage.advance_and_track(network.name) do
+          # orphaning network if necessary
+          if network.managed?
             if network.deployments.size == 1
+              @logger.info("Orphaning managed network #{network.name}")
               network.orphaned = true
               network.orphaned_at = Time.now
               network.save
-            end            
-          end
+            end
+          end           
         end
       end
 

@@ -7,9 +7,7 @@ module Bosh::Director
         @availability_zone_names = availability_zone_names.nil? ? nil : availability_zone_names
       end
 
-      attr_reader :dns, :availability_zone_names
-      # ToDo: Besides cloud properties, what else should be writable?
-      attr_accessor :cloud_properties
+      attr_reader :dns, :cloud_properties, :availability_zone_names
     end
   end
 end

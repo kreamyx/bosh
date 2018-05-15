@@ -34,9 +34,6 @@ module Bosh::Director
 
       migrate_legacy_dns_records
 
-      # Karim: here is where is the first call to the network reservation repository
-      # remember that a deployment plan is a planner object
-      # these are just things that are passed to the instance planner factory
       network_reservation_repository = Bosh::Director::DeploymentPlan::NetworkReservationRepository.new(@deployment_plan, @logger)
       states_by_existing_instance = current_states_by_instance(instances, fix)
 
@@ -57,7 +54,6 @@ module Bosh::Director
         'tags' => tags,
       )
       instance_planner = Bosh::Director::DeploymentPlan::InstancePlanner.new(instance_plan_factory, @logger)
-      # all the instance groups 
       desired_instance_groups = @deployment_plan.instance_groups
 
       job_migrator = Bosh::Director::DeploymentPlan::JobMigrator.new(@deployment_plan, @logger)

@@ -12,13 +12,9 @@ module Bosh
             fail_if_specifically_changing_state_of_ignored_vms(instance_group, existing_instance_models)
           end
 
-          # creates a new network planner for this instance group
           network_planner = NetworkPlanner::Planner.new(@logger)
-          # creates a new placement planner for this instance group
           placement_plan = PlacementPlanner::Plan.new(@instance_plan_factory, network_planner, @logger)
-          # partition the networks into vip networks and non vip networks
           vip_networks, non_vip_networks = instance_group.networks.to_a.partition(&:vip?)
-          # Karim: THIS IS WHERE THE PLACEMENT LOGIC ACTUALLY STARTS
           instance_plans = placement_plan.create_instance_plans(desired_instances, existing_instance_models, non_vip_networks, instance_group.availability_zones, instance_group.name)
 
           log_outcome(instance_plans)
