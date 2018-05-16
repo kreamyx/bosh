@@ -88,9 +88,8 @@ module Bosh::Director
                                 if db_subnet != nil
                                     subnet.cloud_properties = JSON.load(db_subnet.cloud_properties)
                                 else
-                                    # raise an error here
-                                    # cant find a subnet with this name
                                     # this should never happen
+                                    raise("cannot find the subnet in the database")
                                 end
                             end
                         end
