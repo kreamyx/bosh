@@ -28,7 +28,7 @@ module Bosh::Dev::Sandbox
                 :nats_director_tls,
                 :nats_port,
                 :nats_server_ca_path,
-                :network_lifecycle,
+                :networks,
                 :remove_dev_tools,
                 :sandbox_root,
                 :trusted_certs,
