@@ -203,13 +203,6 @@ module Bosh::Dev::Sandbox
       attributes = {
         agent_wait_timeout: @agent_wait_timeout,
         blobstore_storage_dir: blobstore_storage_dir,
-
-        verify_multidigest_path: verify_multidigest_path,
-        director_fix_stateful_nodes: @director_fix_stateful_nodes,
-        dns_enabled: @dns_enabled,
-        local_dns: @local_dns,
-        networks: @networks,
-        external_cpi_config: external_cpi_config,
         cloud_storage_dir: cloud_storage_dir,
         config_server_enabled: @config_server_enabled,
         database: @database,
@@ -227,6 +220,7 @@ module Bosh::Dev::Sandbox
         nats_client_ca_private_key_path: get_nats_client_ca_private_key_path,
         nats_director_tls: nats_certificate_paths['clients']['director'],
         nats_server_ca_path: get_nats_server_ca_path,
+        networks: @networks,
         remove_dev_tools: @remove_dev_tools,
         sandbox_root: sandbox_root,
         trusted_certs: @trusted_certs,
