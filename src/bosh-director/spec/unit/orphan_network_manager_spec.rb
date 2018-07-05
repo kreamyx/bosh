@@ -146,7 +146,7 @@ module Bosh::Director
           expect(cloud).to receive(:delete_network).with('12345')
           expect(cloud).to receive(:delete_network).with('67890')
           expect(cloud_factory).to receive(:get).twice.and_return(cloud)
-          subject.delete_network(orphan_network_1)
+          subject.delete_network('network-1')
 
           expect(Models::Network.where(name: 'network-1').all).to be_empty
           expect(Models::Subnet.where(name: 'subnet-1').all).to be_empty

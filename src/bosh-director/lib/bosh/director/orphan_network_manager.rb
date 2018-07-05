@@ -46,16 +46,17 @@ module Bosh::Director
       end
     end
 
-    def delete_network(network)
-      @logger.info("Deleting orphan network: #{network.name}")
-      orphan_network = Models::Network.where(name: network.name).first
+    def delete_network(network_name)
+      # probably need to grab the networks lock here
+      @logger.info("Deleting orphan network: #{network_name}")
+      orphan_network = Models::Network.where(name: network_name, orphaned: true).first
       if orphan_network
         orphan_network.subnets.each do |subnet|
           delete_subnet(subnet)
         end
-        network.destroy        
+        orphan_network.destroy        
       else
-        @logger.debug("Subnet not found: #{network_cid}")
+        @logger.debug("Orphaned network #{network_name} doesnot exist")
       end
     end
 
