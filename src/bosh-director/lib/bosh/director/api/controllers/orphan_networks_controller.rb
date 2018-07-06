@@ -16,7 +16,7 @@ module Bosh::Director
 
       delete '/:name' do
         job_queue = JobQueue.new
-        task = Bosh::Director::Jobs::DeleteOrphanNetworks.enqueue(current_user, [params[:cid]], job_queue)
+        task = Bosh::Director::Jobs::DeleteOrphanNetworks.enqueue(current_user, [params[:name]], job_queue)
 
         redirect "/tasks/#{task.id}"
       end
