@@ -9,7 +9,7 @@ module Bosh::Director
       attr_accessor :cloud_properties, :range, :gateway, :restricted_ips,
                     :static_ips, :netmask
 
-      def self.parse(network_name, subnet_spec, availability_zones, legacy_reserved_ranges, managed = false)
+      def self.parse(network_name, subnet_spec, availability_zones, legacy_reserved_ranges, managed = false, deployment = nil)
         @logger = Config.logger
 
         reserved_ranges = legacy_reserved_ranges.map { |r| r.first == r.last ? r.first.to_s : "#{r.first}-#{r.last}" }.join(', ')
@@ -23,7 +23,7 @@ module Bosh::Director
         restricted_ips = Set.new
         static_ips = Set.new
 
-        if managed && !range_property
+        if managed && !range_property && !modified?(network_name, subnet_spec, deployment)
           range_property, gateway_property, reserved_property = parse_properties_from_database(network_name, sn_name)
         end
 
@@ -100,6 +100,24 @@ module Bosh::Director
           sn_name,
           netmask_bits,
         )
+      end
+
+      def self.modified?(network_name, subnet_spec, deployment)
+        return false if deployment.nil?
+
+        deployment_cloud_config = deployment.model.cloud_configs.sort(&:id).last.raw_manifest
+        old_network = deployment_cloud_config['networks'].find { |x| x['name'] == network_name }
+        return false if old_network.nil?
+
+        old_subnets = old_network['subnets']
+        old_subnet = old_subnets.find { |x| x['name'] == subnet_spec['name'] }
+        return false if old_subnet.nil?
+
+        subnet_spec['range'] != old_subnet['range'] ||
+          subnet_spec['gateway'] != old_subnet['gateway'] ||
+          subnet_spec['netmask_bits'] != old_subnet['netmask_bits'] ||
+          subnet_spec['cloud_properties'] != old_subnet['cloud_properties'] ||
+          subnet_spec['azs'] != old_subnet['azs']
       end
 
       def initialize(network_name, range, gateway, name_servers, cloud_properties, netmask, availability_zone_names, restricted_ips, static_ips, subnet_name = nil, netmask_bits = nil)

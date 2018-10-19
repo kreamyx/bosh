@@ -18,6 +18,9 @@ module Bosh::Director
         allow(job).to receive(:task_id).and_return(1)
         allow(job).to receive(:username).and_return('name')
         allow(Config).to receive(:network_lifecycle_enabled?).and_return(true)
+        allow(cloud_config_manager).to receive(:list).and_return([cloud_config])
+        allow(Bosh::Director::Api::CloudConfigManager).to receive(:new).and_return(cloud_config_manager)
+        allow(deployment_model).to receive(:cloud_configs).and_return([cloud_config])
       end
 
       subject { CreateNetworkStage.new(logger, deployment_plan) }
@@ -30,6 +33,40 @@ module Bosh::Director
       let(:deployment_plan) { instance_double(Bosh::Director::DeploymentPlan::Planner) }
       let(:availability_zone) { Bosh::Director::DeploymentPlan::AvailabilityZone.new('foo-az', 'old' => 'value') }
       let(:network_resolver) { Bosh::Director::DeploymentPlan::GlobalNetworkResolver.new(deployment_plan, [], logger) }
+      let(:cloud_config_manager) { instance_double(Bosh::Director::Api::CloudConfigManager) }
+      let(:cloud_config) do
+        Models::Config.make(
+          type: 'cloud',
+          name: 'default',
+          content: "{
+            'networks':
+            [
+              {
+                'name': 'a',
+                'type': 'manual',
+                'managed': true,
+                'subnets': [
+                  {
+                    'name': 'subnet-1',
+                    'range': '192.168.10.0/24',
+                    'gateway': '192.168.10.1',
+                    'cloud_properties': { 't0_id': '123456' },
+                    'dns': ['8.8.8.8'],
+                    'reserved': ['192.168.10.2', '192.168.10.3']
+                  },
+                  {
+                    'name': 'subnet-2',
+                    'range': '192.168.20.0/24',
+                    'gateway': '192.168.20.1',
+                    'cloud_properties': { 't0_id': '123456' },
+                    'dns': ['8.8.8.8'],
+                  },
+                ],
+              }
+            ]
+          }",
+        )
+      end
 
       context 'valid spec' do
         let(:network_spec) do
@@ -44,6 +81,7 @@ module Bosh::Director
                 'gateway' => '192.168.10.1',
                 'cloud_properties' => { 't0_id' => '123456' },
                 'dns' => ['8.8.8.8'],
+                'reserved' => ['192.168.10.2', '192.168.10.3'],
               },
               {
                 'name' => 'subnet-2',
@@ -78,9 +116,13 @@ module Bosh::Director
               ['67890', {}, { 'name': 'dummy2' }],
             )
             subject.perform
+
+            # nw = Bosh::Director::Models::Network.first(name: 'a')
+            # sn = nw.subnets.find { |subnet| subnet.name == 'subnet-1' }
+            # expect(sn.reserved).to eq('["192.168.10.2", "192.168.10.3"]')
           end
 
-          it 'unorphans the network is the network is orphaned' do
+          it 'unorphans the network if the network is orphaned' do
             expect(cloud).to receive(:create_network).with(
               hash_including('gateway' => '192.168.10.1'),
             ).and_return(
@@ -116,11 +158,9 @@ module Bosh::Director
             end
           end
 
-          it 'raises appropriate error when subnet is not found in the database' do
-            expect(cloud).to receive(:create_network).once.with(
+          it 'updates the network correctly when adding subnets' do
+            expect(cloud).not_to receive(:create_network).with(
               hash_including('gateway' => '192.168.10.1'),
-            ).and_return(
-              ['12345', {}, { 'name': 'dummy1' }],
             )
             expect(cloud).to receive(:create_network).once.with(
               hash_including('gateway' => '192.168.20.1'),
@@ -128,13 +168,25 @@ module Bosh::Director
               ['67890', {}, { 'name': 'dummy2' }],
             )
 
-            subject.perform
-
-            nw = Bosh::Director::Models::Network.first(name: 'a')
-            subnet1 = nw.subnets.first
-            subnet1.destroy
+            nw = Bosh::Director::Models::Network.new(
+              name: 'a',
+              type: 'manual',
+              created_at: Time.now,
+              orphaned: false,
+            )
             nw.save
-            expect { subject.perform }.to raise_error(Bosh::Director::SubnetNotFoundInDB)
+            old_subnet = Bosh::Director::Models::Subnet.new(
+              cid: '12121',
+              name: 'subnet-1',
+              range: '192.168.10.0/24',
+              gateway: '192.168.10.1',
+              reserved: '[]',
+              cloud_properties: { 't0_id' => '123456' },
+            )
+            nw.add_subnet(old_subnet)
+            old_subnet.save
+
+            subject.perform
           end
 
           it 'cleans up subnets on failure' do

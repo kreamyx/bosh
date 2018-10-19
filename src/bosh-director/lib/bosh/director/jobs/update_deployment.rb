@@ -144,6 +144,58 @@ module Bosh::Director
 
       private
 
+      # unused_subnets returns all the subnets in the iaas that are not being used any more
+      def unused_subnets(new_subnets, old_subnets)
+        old_subnets.select do |subnet|
+          new_subnets.find { |e| e.name == subnet.name }.nil?
+        end
+      end
+
+      def used_cloud_config_state(deployment)
+        latest_cloud_configs = Models::Config.latest_set_for_teams('cloud', *deployment.teams).map(&:id).sort
+        if deployment.cloud_configs.empty?
+          'none'
+        elsif deployment.cloud_configs.map(&:id).sort == latest_cloud_configs
+          'latest'
+        else
+          'outdated'
+        end
+      end
+
+      # removes a subnet model in the iaas and from the database
+      def delete_subnet(cloud_factory, subnet)
+        cpi = cloud_factory.get(subnet.cpi)
+        # TODO: Begin Rescue block here
+        # have a delete_subnet analogius to create_subnet
+        cpi.delete_network(subnet.cid)
+        subnet.destroy
+      end
+
+      def remove_unused_subnets(deployment_plan)
+        return unless Config.network_lifecycle_enabled?
+
+        deployment_model = deployment_plan.model
+        deployment_plan.instance_groups.each do |inst_group|
+          inst_group.networks.each do |jobnetwork|
+            network = jobnetwork.deployment_network
+            next unless network.managed?
+
+            with_network_lock(network.name) do
+              db_network = Bosh::Director::Models::Network.first(name: network.name)
+              # To actually remove the subnets, two conditions have to be met:
+              # 1) all deployments are upgraded to the latest cloud config
+              # 2) There are subnets in the database for that network that don't exist anymore in the manifest
+              if db_network.deployments.all? { |deployment| used_cloud_config_state(deployment) == 'latest' }
+                unused_subnets(network.subnets, db_network.subnets).each do |subnet|
+                  cloud_factory = AZCloudFactory.create_with_latest_configs(deployment_model)
+                  delete_subnet(cloud_factory, subnet)
+                end
+              end
+            end
+          end
+        end
+      end
+
       def mark_orphaned_networks(deployment_plan)
         return unless Config.network_lifecycle_enabled?
 
