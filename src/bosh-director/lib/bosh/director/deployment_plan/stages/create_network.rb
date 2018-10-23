@@ -105,7 +105,8 @@ module Bosh::Director
             deployment_cloud_config = @deployment_plan.model.cloud_configs.sort(&:id).last.raw_manifest
             old_network = deployment_cloud_config['networks'].find { |x| x['name'] == network.name }
 
-            unless network.managed? || old_network.nil?
+            unless network.managed?
+              next if old_network.nil?
               previously_managed = old_network.fetch('managed', false)
               if previously_managed
                 db_network = Bosh::Director::Models::Network.first(name: network.name)
