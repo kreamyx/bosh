@@ -150,7 +150,7 @@ module Bosh::Director
 
                       raise NetworkOverlappingSubnets, "Subnet '#{subnet.name}' in managed network '#{network.name}' cannot be modified to an overlapping subnet" if to_remove_subnet.name.start_with?(subnet.name)
 
-                      raise NetworkOverlappingSubnets, "Updating managed network '#{network.name}' doesnot support overlapping subnets. Subnet '#{subnet.name}' overlaps with subnet '#{to_remove_subnet.name}'"
+                      raise NetworkOverlappingSubnets, "Updating managed network '#{network.name}' doesnot support overlapping subnets. Subnet '#{subnet.name}' overlaps with a subnet that is scheduled for removing"
                     end
                   end
                   # should be behind begin and rescue
