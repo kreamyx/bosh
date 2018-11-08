@@ -24,6 +24,7 @@ module Bosh::Director
       end
 
       subject { CreateNetworkStage.new(logger, deployment_plan) }
+
       let(:cloud_factory) { instance_double(AZCloudFactory) }
       let(:cloud) { instance_double(Bosh::Clouds::ExternalCpi) }
       let(:deployment_model) { Models::Deployment.make(name: 'deployment_name') }
@@ -115,77 +116,6 @@ module Bosh::Director
             ).and_return(
               ['67890', {}, { 'name': 'dummy2' }],
             )
-            subject.perform
-
-            # nw = Bosh::Director::Models::Network.first(name: 'a')
-            # sn = nw.subnets.find { |subnet| subnet.name == 'subnet-1' }
-            # expect(sn.reserved).to eq('["192.168.10.2", "192.168.10.3"]')
-          end
-
-          it 'unorphans the network if the network is orphaned' do
-            expect(cloud).to receive(:create_network).with(
-              hash_including('gateway' => '192.168.10.1'),
-            ).and_return(
-              ['12345', {}, { 'name': 'dummy1' }],
-            )
-            expect(cloud).to receive(:create_network).with(
-              hash_including('gateway' => '192.168.20.1'),
-            ).and_return(
-              ['67890', {}, { 'name': 'dummy2' }],
-            )
-            subject.perform
-            nw = Bosh::Director::Models::Network.first(name: 'a')
-            nw.orphaned = true
-            nw.save
-            subject.perform
-            nw = Bosh::Director::Models::Network.first(name: 'a')
-            expect(nw.orphaned).to eq(false)
-          end
-
-          it 'doesnot create network in iaas if network already exists' do
-            expect(cloud).to receive(:create_network).once.with(
-              hash_including('gateway' => '192.168.10.1'),
-            ).and_return(
-              ['12345', {}, { 'name': 'dummy1' }],
-            )
-            expect(cloud).to receive(:create_network).once.with(
-              hash_including('gateway' => '192.168.20.1'),
-            ).and_return(
-              ['67890', {}, { 'name': 'dummy2' }],
-            )
-            3.times do
-              subject.perform
-            end
-          end
-
-          it 'updates the network correctly when adding subnets' do
-            expect(cloud).not_to receive(:create_network).with(
-              hash_including('gateway' => '192.168.10.1'),
-            )
-            expect(cloud).to receive(:create_network).once.with(
-              hash_including('gateway' => '192.168.20.1'),
-            ).and_return(
-              ['67890', {}, { 'name': 'dummy2' }],
-            )
-
-            nw = Bosh::Director::Models::Network.new(
-              name: 'a',
-              type: 'manual',
-              created_at: Time.now,
-              orphaned: false,
-            )
-            nw.save
-            old_subnet = Bosh::Director::Models::Subnet.new(
-              cid: '12121',
-              name: 'subnet-1',
-              range: '192.168.10.0/24',
-              gateway: '192.168.10.1',
-              reserved: '[]',
-              cloud_properties: { 't0_id' => '123456' },
-            )
-            nw.add_subnet(old_subnet)
-            old_subnet.save
-
             subject.perform
           end
 

@@ -16,7 +16,6 @@ module Bosh::Director
 
         private
 
-        # deployment_cloud_config is only used to detect pure subnet name changes
         def network_update_plan(network_name, network_subnets, subnet_models, deployment_cloud_config)
           old_network = deployment_cloud_config['networks'].find { |x| x['name'] == network_name }
           old_subnets = old_network['subnets']
@@ -30,17 +29,16 @@ module Bosh::Director
           end
 
           # Exclude all subnets that only had name changes
-          # This part is responsible for detecting subnet name changes
           subnets_to_remove.delete_if do |subnet_model|
             old_subnet = old_subnets.find { |x| x['name'] == subnet_model.name }
-            # old_subnet will be nil only when a subnet has been modified.
+            # old_subnet will be nil only when a subnet has actually been modified (not name change).
             # A new database entry will be created with "subnet-outdated-<uuid>"
-            # TODO: refactor this part
             next if old_subnet.nil?
             next unless old_subnet.key?('range')
 
             old_range = NetAddr::CIDR.create(old_subnet['range'])
             old_gateway = NetAddr::CIDR.create(old_subnet['gateway'])
+
             s = subnets_to_add.find do |new_subnet|
               new_subnet.range == old_range && \
                 new_subnet.gateway == old_gateway && \
@@ -49,7 +47,6 @@ module Bosh::Director
 
             unless s.nil?
               subnet_model.name = s.name
-              # TODO: Also modify the reserved field if necessary
               subnet_model.save
               subnets_to_add.delete_if { |subnet| subnet.name == s.name }
             end
@@ -58,12 +55,8 @@ module Bosh::Director
           [subnets_to_add, subnets_to_remove]
         end
 
-        # In order to identify modified subnets, we need three pieces of information:
-        # 1- latest cloud config
-        # 2- deployment cloud config
         def get_modified_subnets(network_subnets, subnet_models)
           recreate_subnets = []
-          no_recreate_subnets = []
           common_subnets = network_subnets.map(&:name) & subnet_models.map(&:name)
           common_subnets.each do |subnet_name|
             new_subnet = network_subnets.find { |x| x.name == subnet_name }
@@ -71,15 +64,14 @@ module Bosh::Director
 
             if new_subnet.range != NetAddr::CIDR.create(old_subnet.range) ||
                new_subnet.gateway != NetAddr::CIDR.create(old_subnet.gateway) ||
+               new_subnet.netmask_bits != old_subnet.netmask_bits ||
                new_subnet.cloud_properties != JSON.parse(old_subnet.predeployment_cloud_properties)
 
               recreate_subnets << subnet_name
-            else
-              no_recreate_subnets << subnet_name
             end
           end
 
-          [recreate_subnets, no_recreate_subnets]
+          recreate_subnets
         end
 
         def create_networks
@@ -105,31 +97,24 @@ module Bosh::Director
 
             with_network_lock(network.name) do
               db_network = Bosh::Director::Models::Network.first(name: network.name)
-              # TODO: here you need to compare the information you get from db with the cloud config info
-              # may be sth like an update plan (comparison between current state and cloud config state)
               if db_network.nil?
                 db_network = create_network(network)
               else
-                # this could be a case of network update
-                recreate_subnets, no_recreate_subnets = get_modified_subnets(
+                # Handle Network Update
+                recreate_subnets = get_modified_subnets(
                   network.subnets,
                   db_network.subnets,
                 )
-                unless recreate_subnets.empty? && no_recreate_subnets.empty?
+
+                unless recreate_subnets.empty?
                   recreate_subnets.each do |subnet_name|
+                    db_subnet = db_network.subnets.find { |sn| sn.name == subnet_name }
                     # it is still possible that db_subnet would be nil if a previous deployment has failed
                     # because the subnet name would have changed
-                    db_subnet = db_network.subnets.find { |sn| sn.name == subnet_name }
                     if db_subnet
                       db_subnet.name = "#{subnet_name}_outdated_#{SecureRandom.uuid}" if db_subnet
                       db_subnet.save
                     end
-                  end
-                  no_recreate_subnets.each do |subnet_name|
-                    # db_subnet = db_network.subnets.find { |sn| sn.name == subnet_name }
-                    # latest_network = latest_cloud_config['networks'].find {|x| x['name'] == network_name}
-                    # new_subnet = latest_network['subnets'].find{|x| x['name'] == subnet_name}
-                    # TODO: Change reserved in the database
                   end
                 end
 
@@ -153,7 +138,7 @@ module Bosh::Director
                       raise NetworkOverlappingSubnets, "Updating managed network '#{network.name}' doesnot support overlapping subnets. Subnet '#{subnet.name}' overlaps with a subnet that is scheduled for removing"
                     end
                   end
-                  # should be behind begin and rescue
+
                   create_subnet(subnet, db_network, {})
                 end
               end
@@ -203,7 +188,7 @@ module Bosh::Director
                   @logger.info("deleting subnet #{cid}")
                   cpi.delete_network(cid)
                 rescue StandardError => e
-                  @logger.info("failed to delete subnet #{cid}: #{e.message}")
+                  @logger.error("failed to delete subnet #{cid}: #{e.message}")
                 end
               end
 
@@ -240,16 +225,16 @@ module Bosh::Director
           end
 
           cpi = cloud_factory.get(cpi_name)
-          network_create_results = cpi.create_network(fetch_cpi_input(subnet, az_cloud_properties))
-          network_cid = network_create_results[0]
-          network_address_properties = network_create_results[1]
-          network_cloud_properties = network_create_results[2]
+
+          @logger.info("Creating subnet #{subnet.name}")
+          network_cid, network_address_properties, network_cloud_properties = cpi.create_network(fetch_cpi_input(subnet, az_cloud_properties))
 
           range = subnet.range ? subnet.range.to_s : network_address_properties['range']
           gw = subnet.gateway ? subnet.gateway.ip : network_address_properties['gateway']
 
           reserved_ips = network_address_properties.fetch('reserved', [])
           rollback[network_cid] = cpi
+
           sn = Bosh::Director::Models::Subnet.new(
             cid: network_cid,
             cloud_properties: JSON.dump(network_cloud_properties),

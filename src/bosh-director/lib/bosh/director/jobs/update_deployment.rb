@@ -118,6 +118,7 @@ module Bosh::Director
               current_variable_set.update(deployed_successfully: true)
               remove_unused_variable_sets(deployment_plan.model, deployment_plan.instance_groups)
               mark_orphaned_networks(deployment_plan)
+              remove_unused_subnets(deployment_plan)
             end
 
             @notifier.send_end_event
@@ -165,9 +166,14 @@ module Bosh::Director
       # removes a subnet model in the iaas and from the database
       def delete_subnet(cloud_factory, subnet)
         cpi = cloud_factory.get(subnet.cpi)
-        # TODO: Begin Rescue block here
-        # have a delete_subnet analogius to create_subnet
-        cpi.delete_network(subnet.cid)
+        begin
+          @logger.info("deleting unused subnet #{subnet.name}")
+          cpi.delete_network(subnet.cid)
+        rescue StandardError => e
+          # failing to delete the subnet in the iaas shouldn't fail the deployment
+          @logger.error("failed to delete subnet #{subnet.name}: #{e.message}")
+        end
+
         subnet.destroy
       end
 

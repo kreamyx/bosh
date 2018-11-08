@@ -92,7 +92,7 @@ module Bosh
                                    plan_options)
           global_network_resolver = GlobalNetworkResolver.new(deployment, Config.director_ips, @logger)
           ip_provider_factory = IpProviderFactory.new(deployment.using_global_networking?, @logger)
-          deployment.cloud_planner = CloudManifestParser.new(@logger).parse(cloud_manifest, global_network_resolver, ip_provider_factory, deployment)
+          deployment.cloud_planner = CloudManifestParser.new(@logger).parse(cloud_manifest, global_network_resolver, ip_provider_factory)
 
           DeploymentSpecParser.new(deployment, Config.event_log, @logger).parse(migrated_manifest_hash, plan_options)
 

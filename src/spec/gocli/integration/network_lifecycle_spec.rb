@@ -44,6 +44,16 @@ describe 'network lifecycle', type: :integration do
       manifest_hash['instance_groups'].first['instances'] = 1
       manifest_hash['instance_groups'].first['azs'] = ['z1']
       manifest_hash['instance_groups'].first['networks'] = [{ 'name' => 'a' }]
+      manifest_hash['instance_groups'] << {
+        'instances' => 1,
+        'azs' => ['z1'],
+        'networks' => [{ 'name' => 'a' }],
+        'name' => 'another_instance_group',
+        'jobs' => [{ 'name' => 'foobar', 'properties' => {} }],
+        'stemcell' => 'default',
+        'vm_type' => 'a',
+        'properties' => {},
+      }
     end
 
     context 'when deploying a manifest with a managed network' do
@@ -536,6 +546,44 @@ describe 'network lifecycle', type: :integration do
         expect(create_network_invocations.count).to eq(2)
         delete_network_invocations = current_sandbox.cpi.invocations_for_method('delete_network')
         expect(delete_network_invocations.count).to eq(0)
+      end
+
+      it 'should delete network in the iaas when all deployments are updated' do
+        cloud_config_hash['networks'] = [{
+          'name' => 'a',
+          'type' => 'manual',
+          'managed' => true,
+          'subnets' => [dummysubnet1, dummysubnet2],
+        }]
+
+        upload_cloud_config(cloud_config_hash: cloud_config_hash)
+        deploy_from_scratch(cloud_config_hash: cloud_config_hash, manifest_hash: manifest_hash)
+        first_deployment_name = manifest_hash['name']
+        manifest_hash['name'] = 'another-deployment'
+        deploy_from_scratch(cloud_config_hash: cloud_config_hash, manifest_hash: manifest_hash)
+
+        manifest_hash['name'] = 'another-deployment-2'
+        deploy_from_scratch(cloud_config_hash: cloud_config_hash, manifest_hash: manifest_hash)
+
+        cloud_config_hash['networks'].first['subnets'].delete_at(1)
+
+        upload_cloud_config(cloud_config_hash: cloud_config_hash)
+
+        deploy_simple_manifest(cloud_config_hash: cloud_config_hash, manifest_hash: manifest_hash)
+
+        delete_network_invocations = current_sandbox.cpi.invocations_for_method('delete_network')
+        expect(delete_network_invocations.count).to eq(0)
+
+        bosh_runner.run('delete-deployment', deployment_name: first_deployment_name)
+
+        delete_network_invocations = current_sandbox.cpi.invocations_for_method('delete_network')
+        expect(delete_network_invocations.count).to eq(0)
+
+        manifest_hash['name'] = 'another-deployment'
+        deploy_from_scratch(cloud_config_hash: cloud_config_hash, manifest_hash: manifest_hash)
+
+        delete_network_invocations = current_sandbox.cpi.invocations_for_method('delete_network')
+        expect(delete_network_invocations.count).to eq(1)
       end
 
       it 'should update modified subnets' do
